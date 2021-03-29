@@ -81,22 +81,10 @@ static void configure_motors() {
  * BT signals/breaks
  * 
  * 
- * General transmission
  * 
- * [/st] : Start DataString
- * [/end]: End Data
+ * [tsk]"task string": String with task
+ * [mot]"motor assignment": Turn motor 
  * 
- * 
- * Task & Data uploading
- * 
- * [/tsk] "task string": String with task
- * [/tsk_done]: task completed
- * 
- * 
- * Motor control
- * 
- * [/mot]: Motor
- * [/spd]: Motor Speed
  * 
  * 
  **************************/
