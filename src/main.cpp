@@ -1,7 +1,7 @@
 #include <Arduino.h>
-#include <stdint.h>
+//#include <stdint.h>
 #include <string.h>
-#include <stdbool.h>
+//#include <stdbool.h>
 #include <stdio.h>
 #include "driver/mcpwm.h"
 #include "driver/gpio.h"
@@ -11,6 +11,7 @@
 #include <string>
 #include "esp_system.h"
 #include <cctype>
+#include <sstream>
 
 
 BluetoothSerial SerialBT;
@@ -19,7 +20,7 @@ BluetoothSerial SerialBT;
 #define LED_POWER  14 // green, power
 
 
-#define MODE 4 
+#define MODE 4 q
 #define MOTOR_1_PIN_A 16
 #define MOTOR_1_PIN_B 17
 #define MOTOR_2_PIN_A 18
@@ -29,6 +30,7 @@ BluetoothSerial SerialBT;
 
 
 bool blinkBatteryWarning;
+int mot_time;
 
 
 typedef enum {
@@ -90,11 +92,38 @@ static void configure_motors() {
  **************************/
 
 
-void motor1_test (void * parameter){
-    Serial.print("running motor...  ");
+void motor1_f (void * parameter){
+    Serial.print("running motor 1 f...  ");
     brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100);
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(mot_time / portTICK_PERIOD_MS);
     brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_0);
+    Serial.println("  ...motor stopped");
+    vTaskDelete(NULL);
+}
+
+void motor1_b (void * parameter){
+    Serial.print("running motor 1 b...  ");
+    brushed_motor_backward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100);
+    vTaskDelay(mot_time / portTICK_PERIOD_MS);
+    brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_0);
+    Serial.println("  ...motor stopped");
+    vTaskDelete(NULL);
+}
+
+void motor2_f (void * parameter){
+    Serial.print("running motor 2 f...  ");
+    brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_1, 100);
+    vTaskDelay(mot_time / portTICK_PERIOD_MS);
+    brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_1);
+    Serial.println("  ...motor stopped");
+    vTaskDelete(NULL);
+}
+
+void motor2_b (void * parameter){
+    Serial.print("running motor 2 b...  ");
+    brushed_motor_backward(MCPWM_UNIT_0, MCPWM_TIMER_1, 100);
+    vTaskDelay(mot_time / portTICK_PERIOD_MS);
+    brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_1);
     Serial.println("  ...motor stopped");
     vTaskDelete(NULL);
 }
@@ -198,18 +227,16 @@ void loop()
     }
 
     
-    if (action == "[mot]" && data_done){
+    
+    if (action == "[sub]" && data_done){
         message = "\0";
         action = "\0";
-        Serial.println(message.c_str());
-        xTaskCreate(&motor1_test, "run motor1 for 1 sec", 1000, NULL, 1, NULL);
+
+        xTaskCreate(&show_status, "show_tasks", 10000, NULL, 1, NULL);
+
         data_done = false;
-    } else if (action == "[sub]" && data_done){
-        message = "\0";
-        action = "\0";
-        xTaskCreate(&show_status, "show_tasks", 1000, NULL, 1, NULL);
-        data_done = false;
-    } else if (action == "[txt]" && data_done) {
+    } 
+    else if (action == "[txt]" && data_done) {
         message = "\0";
         action = "\0";
 
@@ -217,7 +244,44 @@ void loop()
         Serial.println(content.c_str());
 
         data_done = false;
-    } else if (data_done) {
+    } 
+    else if (action == "[mot_1_f]" && data_done){
+        message = "\0";
+        action = "\0";
+        std::istringstream(content) >> mot_time;
+        Serial.println(mot_time);
+        xTaskCreate(&motor1_f, "run motor1 forwards", 10000, NULL, 1, NULL);
+        data_done = false;
+    }
+    else if (action == "[mot_1_b]" && data_done){
+        message = "\0";
+        action = "\0";
+        
+        std::istringstream(content) >> mot_time;
+        Serial.println(message.c_str());
+        xTaskCreate(&motor1_b, "run motor1 backwards", 1000, NULL, 1, NULL);
+        data_done = false;
+    }
+    else if (action == "[mot_2_f]" && data_done){
+        message = "\0";
+        action = "\0";
+        
+        std::istringstream(content) >> mot_time;
+        Serial.println(message.c_str());
+        xTaskCreate(&motor2_f, "run motor2 forwards", 1000, NULL, 1, NULL);
+        data_done = false;
+    }
+    else if (action == "[mot_2_b]" && data_done){
+        message = "\0";
+        action = "\0";
+        
+        std::istringstream(content) >> mot_time;
+        Serial.println(message.c_str());
+        xTaskCreate(&motor2_b, "run motor2 backwards", 1000, NULL, 1, NULL);
+        data_done = false;
+    }
+
+    else if (data_done) {
         message = "\0";
         action = "\0";
         Serial.print("action not programmed: ");
