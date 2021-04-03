@@ -9,8 +9,8 @@
 #include <display_code.h>
 
 void display_serial(std::string toOutput) {
-    Serial.println("calling from other file");
-    Serial.println(toOutput.c_str());
+    Serial.print("calling from other file: ");
+    Serial.print(toOutput.c_str());
 }
 
 //TODO: Explore display capabilities
@@ -21,4 +21,4 @@ void display_serial(std::string toOutput) {
 *
 * - (if possible) Animations
 */
-//TODO:
+

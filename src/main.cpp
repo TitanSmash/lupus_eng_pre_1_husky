@@ -83,18 +83,28 @@ static void configure_motors() {
 }
 
 /**************************
- * BT signals/breaks
+ *  BT commands
  * 
+ *  Task related stuff (TODO)
  * 
- * 
- * [tsk]"task string": String with task
- * [mot]"motor assignment": Turn motor 
- * 
+ *  [add_tsk]"content"      =   String with task (TODO)
+ *  [read_tsk]"content"     =   Outputs task at "content", if empty: list all
+ *  [length_tsk]            =   Outputs length of task array
+ *  [del_tsk]"content"      =   Deletes task at "content", if empty: delete latest
+ *  [fin_tsk]"content"      =   Finished task at "content", if empty: finish task at [0]
+ *  
+ *  
+ *  Motor controls
+ *  
+ *  [mot_1_f]"content"      =   Turn motor 1 forward for a time in ms
+ *  [mot_1_b]"content":     =   Turn motor 1 backward for a time in ms
+ *  [mot_2_f]"content":     =   Turn motor 2 forward for a time in ms
+ *  [mot_2_b]"content":     =   Turn motor 2 backward for a time in ms
  * 
  * 
  **************************/
 
-
+// motor control commands
 void motor1_f (void * parameter){
     Serial.print("running motor 1 f...  ");
     brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100);
@@ -131,6 +141,8 @@ void motor2_b (void * parameter){
     vTaskDelete(NULL);
 }
 
+
+// show status func
 void show_status (void * parameter){
     Serial.print("Task is running on core: ");
     Serial.println(xPortGetCoreID());
@@ -211,19 +223,38 @@ std::string decoder(std::string msg){
 
 void loop()
 {   
-    
+    // read data from buffer, add to message variable and decode it
     if (SerialBT.available()){
         data_in = SerialBT.read();
         
         if (data_in != '\r'){
             message.push_back(data_in);
         } else if (data_in == '\r'){
-            action = decoder(message);
-            data_done = true;
-            SerialBT.read();
+            action = decoder(message);  // decoder function
+            data_done = true;           // without this, unfinished data would be looked at
+            SerialBT.read();            // clear buffer
         }
     }
 
+    /*  Main command processor 
+    *   
+    *   To read and call a new function, add a else if as below
+    * 
+    * 
+    *   _______________________________________________________________________________
+    *   
+    *   else if(action == "[cmd]" && data_done) {
+    *       message = "\0";
+    *       action = "\0";
+    *       xTaskCreate(&command_func, "command desc", 10000, NULL, 1, NULL);
+    *       data_done = false;
+    *   }
+    *   ________________________________________________________________________________  
+    * 
+    *   In the function, you can read the variable content for the data string. Modifying 
+    *   Datatypes has to be done within the function itself.
+    * 
+    */
     
     
     if (action == "[sub]" && data_done){
@@ -239,7 +270,7 @@ void loop()
         action = "\0";
 
         Serial.print("BT Text sent: ");
-        Serial.println(content.c_str());
+        Serial.println(content.c_str()); // because we are using std::string (cpp sting), we need to transform it to a c-string with .c_str()
 
         data_done = false;
     } 
