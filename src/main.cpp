@@ -2,16 +2,19 @@
 //#include <stdint.h>
 #include <string.h>
 //#include <stdbool.h>
-#include <stdio.h>
+//#include <stdio.h>
 #include "driver/mcpwm.h"
 #include "driver/gpio.h"
 #include <BluetoothSerial.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include <string>
+//#include <string>
 #include "esp_system.h"
-#include <cctype>
+//#include <cctype>
 #include <sstream>
+#include <display_code.h>
+
+
 
 
 BluetoothSerial SerialBT;
@@ -20,7 +23,7 @@ BluetoothSerial SerialBT;
 #define LED_POWER  14 // green, power
 
 
-#define MODE 4 q
+#define MODE 4
 #define MOTOR_1_PIN_A 16
 #define MOTOR_1_PIN_B 17
 #define MOTOR_2_PIN_A 18
@@ -137,10 +140,10 @@ void show_status (void * parameter){
 
 
 
+
 void battery_status (void * parameter) {
     while(true) {
         vTaskDelay(50000 / portTICK_PERIOD_MS); // run every 10 seconds
-
         uint32_t reading = analogReadMilliVolts(35);
         Serial.print("battery voltage: ");
         Serial.println(reading);
@@ -151,8 +154,6 @@ void battery_status (void * parameter) {
         else
             blinkBatteryWarning = false;
     }
-
-    
 }
 
 
@@ -166,7 +167,6 @@ void setup()
     gpio_pad_select_gpio(LED_POWER);
     gpio_set_direction((gpio_num_t) LED_POWER, GPIO_MODE_OUTPUT);
 
-    
 
     if(!SerialBT.begin("board 54")){
         Serial.println("An error occurred initializing Bluetooth");
@@ -174,8 +174,6 @@ void setup()
     Serial.println("please connect to device");
 
     xTaskCreate(&battery_status, "battery", 1000, NULL, 1, NULL);
-    
-    
 }
 
 char data_in;
@@ -285,7 +283,7 @@ void loop()
         message = "\0";
         action = "\0";
         Serial.print("action not programmed: ");
-        Serial.println(action.c_str());
+        display_serial(content);
         Serial.println("clearing message");
         data_done = false;
     }
