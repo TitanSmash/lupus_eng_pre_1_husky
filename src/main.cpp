@@ -97,9 +97,9 @@ static void configure_motors() {
  *  Motor controls
  *  
  *  [mot_1_f]"content"      =   Turn motor 1 forward for a time in ms
- *  [mot_1_b]"content":     =   Turn motor 1 backward for a time in ms
- *  [mot_2_f]"content":     =   Turn motor 2 forward for a time in ms
- *  [mot_2_b]"content":     =   Turn motor 2 backward for a time in ms
+ *  [mot_1_b]"content"      =   Turn motor 1 backward for a time in ms
+ *  [mot_2_f]"content"      =   Turn motor 2 forward for a time in ms
+ *  [mot_2_b]"content"      =   Turn motor 2 backward for a time in ms
  *  
  *  Hello
  * 

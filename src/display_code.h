@@ -10,3 +10,4 @@
 
 
 void display_serial(std::string toOutput);
+void display_test();
