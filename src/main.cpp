@@ -16,7 +16,6 @@
 
 
 
-
 BluetoothSerial SerialBT;
 
 #define LED_STATUS 27 // red, status
@@ -34,7 +33,7 @@ BluetoothSerial SerialBT;
 
 bool blinkBatteryWarning;
 int mot_time;
-
+int mot_speed = 100;
 
 typedef enum {
 	APP_MOTOR_1 = 0,
@@ -101,14 +100,14 @@ static void configure_motors() {
  *  [mot_2_f]"content"      =   Turn motor 2 forward for a time in ms
  *  [mot_2_b]"content"      =   Turn motor 2 backward for a time in ms
  *  
- *  Hello
+ *  [mot_1_f]1000
  * 
  **************************/
 
 // motor control commands
 void motor1_f (void * parameter){
     Serial.print("running motor 1 f...  ");
-    brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100);
+    brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 70);
     vTaskDelay(mot_time / portTICK_PERIOD_MS);
     brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_0);
     Serial.println("  ...motor stopped");
@@ -117,7 +116,7 @@ void motor1_f (void * parameter){
 
 void motor1_b (void * parameter){
     Serial.print("running motor 1 b...  ");
-    brushed_motor_backward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100);
+    brushed_motor_backward(MCPWM_UNIT_0, MCPWM_TIMER_0, 60);
     vTaskDelay(mot_time / portTICK_PERIOD_MS);
     brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_0);
     Serial.println("  ...motor stopped");
@@ -150,6 +149,18 @@ void show_status (void * parameter){
     vTaskDelay(100 / portTICK_PERIOD_MS);
     vTaskDelete(NULL);
 }
+
+//create new vtask
+/*
+*   void your_task(void * parameter){
+*       vTaskDelay(100 / portTICK_PERIOD_MS);
+*       vTaskDelete(NULL);
+*   }
+*   std::string content <- String after cmd
+*   
+*
+*/
+
 
 
 
@@ -307,6 +318,18 @@ void loop()
         
         std::istringstream(content) >> mot_time;
         Serial.println(message.c_str());
+        xTaskCreate(&motor2_b, "run motor2 backwards", 1000, NULL, 1, NULL);
+        data_done = false;
+    }
+
+    else if (action == "[set_speed]" && data_done){
+        message = "\0";
+        action = "\0";
+        
+        std::istringstream(content) >> mot_speed;
+        Serial.println(message.c_str());
+        SerialBT.print("Motor speed is: " );
+        SerialBT.println(mot_speed);
         xTaskCreate(&motor2_b, "run motor2 backwards", 1000, NULL, 1, NULL);
         data_done = false;
     }
