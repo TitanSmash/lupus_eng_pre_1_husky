@@ -13,6 +13,11 @@
 //#include <cctype>
 #include <sstream>
 #include <display_code.h>
+#include "Wire.h"
+#include "Adafruit_GFX.h"
+#include "OakOled.h"
+#include "Adafruit_I2CDevice.h"
+#include "SPI.h"
 
 
 
