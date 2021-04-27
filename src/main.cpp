@@ -8,7 +8,7 @@
 #include <BluetoothSerial.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-//#include <string>
+#include <string>
 #include "esp_system.h"
 //#include <cctype>
 #include <sstream>
@@ -18,8 +18,6 @@
 #include "OakOled.h"
 #include "Adafruit_I2CDevice.h"
 #include "SPI.h"
-
-
 
 BluetoothSerial SerialBT;
 
@@ -188,6 +186,10 @@ void battery_status (void * parameter) {
 
 void setup()
 {
+
+
+    display_setup();
+    display_loop("help");
     Serial.begin(115200);
     configure_motors();
 
@@ -203,7 +205,7 @@ void setup()
     Serial.println("please connect to device");
 
     xTaskCreate(&battery_status, "battery", 1000, NULL, 1, NULL);
-}
+} 
 
 char data_in;
 bool data_done = false;
@@ -240,6 +242,7 @@ std::string decoder(std::string msg){
 
 void loop()
 {   
+
     // read data from buffer, add to message variable and decode it
     if (SerialBT.available()){
         data_in = SerialBT.read();
@@ -251,7 +254,7 @@ void loop()
             data_done = true;           // without this, unfinished data would be looked at
             SerialBT.read();            // clear buffer
         }
-    }
+    } 
 
     /*  Main command processor 
     *   
