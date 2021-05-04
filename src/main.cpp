@@ -13,7 +13,6 @@
 //#include <cctype>
 #include <sstream>
 #include <display_code.h>
-#include <task_manager.h>
 #include "Wire.h"
 #include "Adafruit_GFX.h"
 #include "OakOled.h"
@@ -38,6 +37,16 @@ BluetoothSerial SerialBT;
 bool blinkBatteryWarning;
 int mot_time;
 int mot_speed = 100;
+
+//-----------------------------------------------------------------------------------------
+std::vector<std::string> tasks = {"LinAlg", "Algebra", "Mechanik", "WuF", "Inno-Prozess", "Informatik"};
+int count_item = 0;
+int last_item = 0;
+int button1, button2;
+int count_runs = 0;
+bool pressed = false;
+//------------------------------------------------------
+
 
 typedef enum {
 	APP_MOTOR_1 = 0,
@@ -85,7 +94,8 @@ static void configure_motors() {
     mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_1, &pwm_config); // Configure PWM0A & PWM0B with above settings
 }
 
-/**************************
+
+/**********
  *  BT commands
  * 
  *  Task related stuff (TODO)
@@ -106,7 +116,7 @@ static void configure_motors() {
  *  
  *  [mot_1_f]1000
  * 
- **************************/
+ **********/
 
 // motor control commands
 void motor1_f (void * parameter){
@@ -154,6 +164,40 @@ void show_status (void * parameter){
     vTaskDelete(NULL);
 }
 
+//----------------------------------------------------------
+//delete task on ESP and send noification to app
+void deleteTask(void * parameter) {
+    String tmp;
+    if(count_item < tasks.size()) {
+        tasks.erase(tasks.begin() + count_item);
+        tmp = "#P#" + String(count_item);
+        SerialBT.print(tmp);
+        last_item = -1;
+    }
+    if(!(count_item < tasks.size())) {
+        count_item = 0;
+    }
+    if(tasks.size() == 0) {
+        //clear display...
+    }
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelete(NULL);
+}
+
+
+//send tasks in "task-vector" to app
+void sendTasks(void * parameter) {
+    std::string tmp = "#S#";
+    for(int i = 0; i < tasks.size(); i++) {
+        tmp += tasks.at(i) + "#S#";
+    }
+    SerialBT.print(tmp.c_str());
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelete(NULL);
+}
+//-------------------------------------------------------
+
+
 //create new vtask
 /*
 *   void your_task(void * parameter){
@@ -200,6 +244,12 @@ void setup()
     gpio_set_direction((gpio_num_t) LED_POWER, GPIO_MODE_OUTPUT);
 
 
+    //----------------------------
+    //buttons initialization
+    pinMode(2, INPUT);
+    pinMode(4, INPUT);
+    //----------------------
+
     if(!SerialBT.begin("board 54")){
         Serial.println("An error occurred initializing Bluetooth");
     }
@@ -213,6 +263,7 @@ bool data_done = false;
 std::string message = "";
 std::string content= "";
 std::string action = ""; 
+
 
 
 std::string decoder(std::string msg){
@@ -239,8 +290,6 @@ std::string decoder(std::string msg){
 }
 
 
-
-
 void loop()
 {   
 
@@ -257,12 +306,69 @@ void loop()
         }
     } 
 
+
+
+    //-----------------------------------------------------------------------------
+    //redefine pins for buttons?
+    //scroll button
+    if(digitalRead(2) == 1 && !pressed) {
+        count_runs = 0;
+        pressed = true;
+        if(count_item < tasks.size() - 1) {
+            ++count_item;
+        } else if(count_item < tasks.size() && tasks.size() >= 1) {
+            count_item = 0;
+        }
+    }
+    //delete button
+    if(digitalRead(4) == 1 && !pressed) {
+        pressed = true;
+        count_runs = 0;
+
+        message = "\0";
+        action = "\0";
+        xTaskCreate(&deleteTask, "send tasks to app", 10000, NULL, 1, NULL);
+        data_done = false;
+    }
+
+    //displayItem
+    if((last_item != count_item) && (tasks.size() > count_item)) {
+        last_item = count_item; 
+
+        //TODO display task
+        //...
+
+
+        //lcd.clear();
+        //lcd.setCursor(0, 0);
+        //lcd.print(tasks.at(count_item).c_str());
+    }
+
+    //reset "pressed status" (buttons can be pressed again
+    if(pressed && count_runs > 15) {
+        pressed = false;
+    }
+    if(count_runs == 180) {
+        if(!(count_item < tasks.size())) {
+            count_item = 0;
+        } 
+        else {
+            ++count_item;
+        }
+        count_runs = 0;
+    }
+    ++count_runs;
+    //delay(20);
+    //--------------------------------------------
+
+
+
     /*  Main command processor 
     *   
     *   To read and call a new function, add a else if as below
     * 
     * 
-    *   _______________________________________________________________________________
+    *   ___________________________
     *   
     *   else if(action == "[cmd]" && data_done) {
     *       message = "\0";
@@ -270,7 +376,7 @@ void loop()
     *       xTaskCreate(&command_func, "command desc", 10000, NULL, 1, NULL);
     *       data_done = false;
     *   }
-    *   ________________________________________________________________________________  
+    *   ____________________________  
     * 
     *   In the function, you can read the variable content for the data string. Modifying 
     *   Datatypes has to be done within the function itself.
@@ -286,7 +392,6 @@ void loop()
 
         data_done = false;
     } 
-
     else if (action == "[txt]" && data_done) {
         message = "\0";
         action = "\0";
@@ -296,7 +401,6 @@ void loop()
 
         data_done = false;
     } 
-
     else if (action == "[mot_1_f]" && data_done){
         message = "\0";
         action = "\0";
@@ -305,7 +409,6 @@ void loop()
         xTaskCreate(&motor1_f, "run motor1 forwards", 10000, NULL, 1, NULL);
         data_done = false;
     }
-
     else if (action == "[mot_1_b]" && data_done){
         message = "\0";
         action = "\0";
@@ -315,7 +418,6 @@ void loop()
         xTaskCreate(&motor1_b, "run motor1 backwards", 1000, NULL, 1, NULL);
         data_done = false;
     }
-
     else if (action == "[mot_2_f]" && data_done){
         message = "\0";
         action = "\0";
@@ -325,7 +427,6 @@ void loop()
         xTaskCreate(&motor2_f, "run motor2 forwards", 1000, NULL, 1, NULL);
         data_done = false;
     }
-
     else if (action == "[mot_2_b]" && data_done){
         message = "\0";
         action = "\0";
@@ -347,7 +448,21 @@ void loop()
         xTaskCreate(&motor2_b, "run motor2 backwards", 1000, NULL, 1, NULL);
         data_done = false;
     }
+    //-------------------------------------------------------------------------------------------
+    else if(action == "[#S#]") {
+        message = "\0";
+        action = "\0";
+        tasks.push_back(content);
+        data_done = false;
+    }
 
+    else if(action == "[#!#]") {
+        message = "\0";
+        action = "\0";
+        xTaskCreate(&sendTasks, "send tasks to app", 10000, NULL, 1, NULL);
+        data_done = false;
+    }
+    //--------------------------------------------------------------------------------------------
     else if (data_done) {
         message = "\0";
         action = "\0";
@@ -357,4 +472,3 @@ void loop()
         data_done = false;
     }
 }
-
