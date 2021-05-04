@@ -13,6 +13,7 @@
 //#include <cctype>
 #include <sstream>
 #include <display_code.h>
+#include <task_manager.h>
 #include "Wire.h"
 #include "Adafruit_GFX.h"
 #include "OakOled.h"
@@ -285,6 +286,7 @@ void loop()
 
         data_done = false;
     } 
+
     else if (action == "[txt]" && data_done) {
         message = "\0";
         action = "\0";
@@ -294,6 +296,7 @@ void loop()
 
         data_done = false;
     } 
+
     else if (action == "[mot_1_f]" && data_done){
         message = "\0";
         action = "\0";
@@ -302,6 +305,7 @@ void loop()
         xTaskCreate(&motor1_f, "run motor1 forwards", 10000, NULL, 1, NULL);
         data_done = false;
     }
+
     else if (action == "[mot_1_b]" && data_done){
         message = "\0";
         action = "\0";
@@ -311,6 +315,7 @@ void loop()
         xTaskCreate(&motor1_b, "run motor1 backwards", 1000, NULL, 1, NULL);
         data_done = false;
     }
+
     else if (action == "[mot_2_f]" && data_done){
         message = "\0";
         action = "\0";
@@ -320,6 +325,7 @@ void loop()
         xTaskCreate(&motor2_f, "run motor2 forwards", 1000, NULL, 1, NULL);
         data_done = false;
     }
+
     else if (action == "[mot_2_b]" && data_done){
         message = "\0";
         action = "\0";

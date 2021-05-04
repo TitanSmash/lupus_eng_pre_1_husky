@@ -28,7 +28,7 @@ void display_serial(std::string toOutput) {
 
 void display_setup() {
 
-    Wire.begin(33, 32);
+    Wire.begin(SCK, SDA);
 
     oled.begin();
     oled.setTextColor(1);
@@ -40,7 +40,6 @@ void display_setup() {
 
 void display_loop(std::string loopOutput){
 
-
     for(int i=0; i<64; i++){
         oled.clearDisplay();
         oled.setCursor(i, 0);
@@ -51,6 +50,8 @@ void display_loop(std::string loopOutput){
         delay(50);
     }
 }
+
+
 //TODO: Explore display capabilities
 /* TODO: Create display OS:
 * - idle rotation
