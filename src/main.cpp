@@ -121,7 +121,7 @@ static void configure_motors() {
 // motor control commands
 void motor1_f (void * parameter){
     Serial.print("running motor 1 f...  ");
-    brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 70);
+    brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100);
     vTaskDelay(mot_time / portTICK_PERIOD_MS);
     brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_0);
     Serial.println("  ...motor stopped");
@@ -130,7 +130,7 @@ void motor1_f (void * parameter){
 
 void motor1_b (void * parameter){
     Serial.print("running motor 1 b...  ");
-    brushed_motor_backward(MCPWM_UNIT_0, MCPWM_TIMER_0, 60);
+    brushed_motor_backward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100);
     vTaskDelay(mot_time / portTICK_PERIOD_MS);
     brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_0);
     Serial.println("  ...motor stopped");
@@ -152,6 +152,19 @@ void motor2_b (void * parameter){
     vTaskDelay(mot_time / portTICK_PERIOD_MS);
     brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_1);
     Serial.println("  ...motor stopped");
+    vTaskDelete(NULL);
+}
+
+
+void sit_and_stand (void * parameter){
+    Serial.print("sit and.... ");
+    brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100);
+    vTaskDelay(800 / portTICK_PERIOD_MS);
+    brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_0);
+    Serial.println("  ... stand");
+    brushed_motor_backward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100);
+    vTaskDelay(800 / portTICK_PERIOD_MS);
+    brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_0);
     vTaskDelete(NULL);
 }
 
@@ -178,7 +191,7 @@ void deleteTask(void * parameter) {
         count_item = 0;
     }
     if(tasks.size() == 0) {
-        //clear display...
+        display_loop("no tasks");
     }
     vTaskDelay(100 / portTICK_PERIOD_MS);
     vTaskDelete(NULL);
@@ -209,6 +222,11 @@ void sendTasks(void * parameter) {
 *
 */
 
+std::string hello2;
+void task_miligate_display(void * parameter){
+    display_loop(hello2);
+    vTaskDelete(NULL);
+}
 
 
 
@@ -234,7 +252,7 @@ void setup()
 
 
     display_setup();
-    display_loop("help");
+    //display_loop("help");
     Serial.begin(115200);
     configure_motors();
 
@@ -332,16 +350,12 @@ void loop()
     }
 
     //displayItem
-    if((last_item != count_item) && (tasks.size() > count_item)) {
+    if((last_item != count_item) && (tasks.size() > count_item) ) {
         last_item = count_item; 
-
-        //TODO display task
-        //...
-
-
-        //lcd.clear();
-        //lcd.setCursor(0, 0);
-        //lcd.print(tasks.at(count_item).c_str());
+        hello2 = tasks.at(count_item);
+        //xTaskCreate(&task_miligate_display, "display tasks", 10000, NULL, 1, NULL); 
+        //display_loop("tests");
+        //display_loop(tasks.at(count_item).c_str());
     }
 
     //reset "pressed status" (buttons can be pressed again
@@ -395,7 +409,7 @@ void loop()
     else if (action == "[txt]" && data_done) {
         message = "\0";
         action = "\0";
-
+        display_loop(content.c_str());
         Serial.print("BT Text sent: ");
         Serial.println(content.c_str()); // because we are using std::string (cpp sting), we need to transform it to a c-string with .c_str()
 
@@ -460,6 +474,19 @@ void loop()
         message = "\0";
         action = "\0";
         xTaskCreate(&sendTasks, "send tasks to app", 10000, NULL, 1, NULL);
+        data_done = false;
+    }
+    else if(action == "[#P#]") {
+        message = "\0";
+        action = "\0";
+        int position = (int) std::strtol(content.c_str(), nullptr, 10);
+        if(position < tasks.size()) {
+            tasks.erase(tasks.begin() + position);
+            last_item = -1;
+        }
+        if(!(count_item < tasks.size())) {
+            count_item = 0;
+        }
         data_done = false;
     }
     //--------------------------------------------------------------------------------------------

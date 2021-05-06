@@ -15,9 +15,10 @@
 #include <OakOLED.h>
 #include <display_code.h>
 
-#define SCK 33 //Display Pins
-#define SDA 32
 
+#define SCK 21 //Display Pins
+#define SDA 22
+std::string main_string = "";
 
 OakOLED oled;
 
@@ -27,29 +28,35 @@ void display_serial(std::string toOutput) {
 }
 
 void display_setup() {
-
-    Wire.begin(SCK, SDA);
-
+    Serial.println("init display");
+    // Wire.begin(22, 21);
+    
     oled.begin();
     oled.setTextColor(1);
-    oled.setTextSize(3);
+    oled.setTextSize(2);
     oled.clearDisplay();
     oled.println("Display On");
     oled.display();
 }
 
+void display_loop_par(void * parameter){
+
+        oled.clearDisplay();
+        oled.setCursor(0, 0);
+        oled.println(main_string.c_str());
+        oled.display();
+    
+    vTaskDelete(NULL);
+}
+
 void display_loop(std::string loopOutput){
 
-    for(int i=0; i<64; i++){
-        oled.clearDisplay();
-        oled.setCursor(i, 0);
-        oled.println("var");
-        oled.setCursor(64-i, 40);
-        oled.println(loopOutput.c_str());
-        oled.display();
-        delay(50);
-    }
+    main_string = loopOutput;
+    xTaskCreate(&display_loop_par, "display stuff", 10000, NULL, 3, NULL);
 }
+
+
+
 
 
 //TODO: Explore display capabilities
