@@ -177,6 +177,14 @@ void show_status (void * parameter){
     vTaskDelete(NULL);
 }
 
+
+std::string hello2;
+void task_miligate_display(void * parameter){
+    display_loop(hello2);
+    vTaskDelete(NULL);
+}
+
+
 //----------------------------------------------------------
 //delete task on ESP and send noification to app
 void deleteTask(void * parameter) {
@@ -208,6 +216,54 @@ void sendTasks(void * parameter) {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     vTaskDelete(NULL);
 }
+
+void button_detector(void * parameter) {
+    //forward button
+    if(digitalRead(2) == 1 && !pressed) {
+        count_runs = 0;
+        pressed = true;
+        if(count_item < tasks.size() - 1) {
+            ++count_item;
+        } else if(count_item < tasks.size() && tasks.size() >= 1) {
+            count_item = 0;
+        }
+    }
+    //delete button
+    if(digitalRead(4) == 1 && !pressed) {
+        pressed = true;
+        count_runs = 0;
+
+        xTaskCreate(&deleteTask, "send tasks to app", 10000, NULL, 1, NULL);
+    }
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    //vTaskDelete(NULL);
+}
+
+void counter_timer(void * parameter) {
+    //displayItem
+    if((last_item != count_item) && (tasks.size() > count_item) ) {
+        last_item = count_item; 
+        hello2 = tasks.at(count_item);
+    }
+
+    //reset "pressed status" (buttons can be pressed again
+    if(pressed && count_runs > 15) {
+        pressed = false;
+    }
+    if(count_runs == 180) {
+        if(!(count_item < tasks.size())) {
+            count_item = 0;
+        } 
+        else {
+            ++count_item;
+        }
+        count_runs = 0;
+    }
+    ++count_runs;
+    delay(15);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    //vTaskDelete(NULL);
+}
 //-------------------------------------------------------
 
 
@@ -221,12 +277,6 @@ void sendTasks(void * parameter) {
 *   
 *
 */
-
-std::string hello2;
-void task_miligate_display(void * parameter){
-    display_loop(hello2);
-    vTaskDelete(NULL);
-}
 
 
 
@@ -274,6 +324,8 @@ void setup()
     Serial.println("please connect to device");
 
     xTaskCreate(&battery_status, "battery", 1000, NULL, 1, NULL);
+    xTaskCreate(&button_detector, "detect pressed button", 1000, NULL, 1, NULL);
+    xTaskCreate(&counter_timer, "counter", 1000, NULL, 1, NULL);
 } 
 
 char data_in;
@@ -324,8 +376,7 @@ void loop()
         }
     } 
 
-
-
+    /*
     //-----------------------------------------------------------------------------
     //redefine pins for buttons?
     //scroll button
@@ -343,10 +394,10 @@ void loop()
         pressed = true;
         count_runs = 0;
 
-        message = "\0";
-        action = "\0";
+        //message = "\0";
+        //action = "\0";
         xTaskCreate(&deleteTask, "send tasks to app", 10000, NULL, 1, NULL);
-        data_done = false;
+        //data_done = false;
     }
 
     //displayItem
@@ -374,7 +425,7 @@ void loop()
     ++count_runs;
     //delay(20);
     //--------------------------------------------
-
+    */
 
 
     /*  Main command processor 
@@ -486,6 +537,9 @@ void loop()
         }
         if(!(count_item < tasks.size())) {
             count_item = 0;
+        }
+        if(tasks.size() == 0) {
+            display_loop("no tasks");
         }
         data_done = false;
     }
