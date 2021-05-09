@@ -218,50 +218,54 @@ void sendTasks(void * parameter) {
 }
 
 void button_detector(void * parameter) {
-    //forward button
-    if(digitalRead(2) == 1 && !pressed) {
-        count_runs = 0;
-        pressed = true;
-        if(count_item < tasks.size() - 1) {
-            ++count_item;
-        } else if(count_item < tasks.size() && tasks.size() >= 1) {
-            count_item = 0;
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    while(true) {
+        //forward button
+        if(digitalRead(2) == 1 && !pressed) {
+            count_runs = 0;
+            pressed = true;
+            if(count_item < tasks.size() - 1) {
+                ++count_item;
+            } else if(count_item < tasks.size() && tasks.size() >= 1) {
+                count_item = 0;
+            }
+        }
+        //delete button
+        if(digitalRead(4) == 1 && !pressed) {
+            pressed = true;
+            count_runs = 0;
+
+            xTaskCreate(&deleteTask, "send tasks to app", 10000, NULL, 1, NULL);
         }
     }
-    //delete button
-    if(digitalRead(4) == 1 && !pressed) {
-        pressed = true;
-        count_runs = 0;
-
-        xTaskCreate(&deleteTask, "send tasks to app", 10000, NULL, 1, NULL);
-    }
-    vTaskDelay(100 / portTICK_PERIOD_MS);
     //vTaskDelete(NULL);
 }
 
 void counter_timer(void * parameter) {
-    //displayItem
-    if((last_item != count_item) && (tasks.size() > count_item) ) {
-        last_item = count_item; 
-        hello2 = tasks.at(count_item);
-    }
-
-    //reset "pressed status" (buttons can be pressed again
-    if(pressed && count_runs > 15) {
-        pressed = false;
-    }
-    if(count_runs == 180) {
-        if(!(count_item < tasks.size())) {
-            count_item = 0;
-        } 
-        else {
-            ++count_item;
-        }
-        count_runs = 0;
-    }
-    ++count_runs;
-    delay(15);
     vTaskDelay(100 / portTICK_PERIOD_MS);
+    while(true) {
+        //displayItem
+        if((last_item != count_item) && (tasks.size() > count_item) ) {
+            last_item = count_item; 
+            hello2 = tasks.at(count_item);
+        }
+
+        //reset "pressed status" (buttons can be pressed again
+        if(pressed && count_runs > 15) {
+            pressed = false;
+        }
+        if(count_runs == 180) {
+            if(!(count_item < tasks.size())) {
+                count_item = 0;
+            } 
+            else {
+                ++count_item;
+            }
+            count_runs = 0;
+        }
+        ++count_runs;
+        delay(15);
+    }
     //vTaskDelete(NULL);
 }
 //-------------------------------------------------------
