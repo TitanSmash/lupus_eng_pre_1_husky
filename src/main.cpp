@@ -216,7 +216,7 @@ void sendTasks(void * parameter) {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     vTaskDelete(NULL);
 }
-
+/*
 void button_detector(void * parameter) {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     while(true) {
@@ -240,7 +240,7 @@ void button_detector(void * parameter) {
     }
     //vTaskDelete(NULL);
 }
-
+*/
 void counter_timer(void * parameter) {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     while(true) {
@@ -328,7 +328,7 @@ void setup()
     Serial.println("please connect to device");
 
     xTaskCreate(&battery_status, "battery", 1000, NULL, 1, NULL);
-    xTaskCreate(&button_detector, "detect pressed button", 1000, NULL, 1, NULL);
+    //xTaskCreate(&button_detector, "detect pressed button", 1000, NULL, 1, NULL);
     xTaskCreate(&counter_timer, "counter", 1000, NULL, 1, NULL);
 } 
 
@@ -380,7 +380,7 @@ void loop()
         }
     } 
 
-    /*
+    
     //-----------------------------------------------------------------------------
     //redefine pins for buttons?
     //scroll button
@@ -403,7 +403,7 @@ void loop()
         xTaskCreate(&deleteTask, "send tasks to app", 10000, NULL, 1, NULL);
         //data_done = false;
     }
-
+    /*
     //displayItem
     if((last_item != count_item) && (tasks.size() > count_item) ) {
         last_item = count_item; 
