@@ -216,7 +216,7 @@ void sendTasks(void * parameter) {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     vTaskDelete(NULL);
 }
-/*
+
 void button_detector(void * parameter) {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     while(true) {
@@ -233,6 +233,7 @@ void button_detector(void * parameter) {
         //delete button
         if(digitalRead(4) == 1 && !pressed) {
             pressed = true;
+            //stand up and shot
             count_runs = 0;
 
             xTaskCreate(&deleteTask, "send tasks to app", 10000, NULL, 1, NULL);
@@ -240,7 +241,7 @@ void button_detector(void * parameter) {
     }
     //vTaskDelete(NULL);
 }
-*/
+
 void counter_timer(void * parameter) {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     while(true) {
@@ -384,6 +385,7 @@ void loop()
     //-----------------------------------------------------------------------------
     //redefine pins for buttons?
     //scroll button
+    /*
     if(digitalRead(2) == 1 && !pressed) {
         count_runs = 0;
         pressed = true;
@@ -403,7 +405,7 @@ void loop()
         xTaskCreate(&deleteTask, "send tasks to app", 10000, NULL, 1, NULL);
         //data_done = false;
     }
-    /*
+    
     //displayItem
     if((last_item != count_item) && (tasks.size() > count_item) ) {
         last_item = count_item; 
