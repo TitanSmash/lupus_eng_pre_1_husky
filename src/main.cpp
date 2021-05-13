@@ -155,6 +155,20 @@ void motor2_b (void * parameter){
     vTaskDelete(NULL);
 }
 
+void shot(void * parameter) {
+    brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_1, 100);
+    vTaskDelay(800 / portTICK_PERIOD_MS);
+    brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_1);
+    ++shots;
+    if(shots == 3) {
+        shots = 0;
+        brushed_motor_backward(MCPWM_UNIT_0, MCPWM_TIMER_1, 100);
+        vTaskDelay(800 / portTICK_PERIOD_MS);
+        brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_1);
+    }
+    vTaskDelete(NULL);
+}
+
 
 void sit_and_stand (void * parameter){
     Serial.print("sit and.... ");
@@ -168,20 +182,6 @@ void sit_and_stand (void * parameter){
     brushed_motor_backward(MCPWM_UNIT_0, MCPWM_TIMER_0, 100);
     vTaskDelay(800 / portTICK_PERIOD_MS);
     brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_0);
-    vTaskDelete(NULL);
-}
-
-void shot(void * parameter) {
-    brushed_motor_forward(MCPWM_UNIT_0, MCPWM_TIMER_1, 100);
-    vTaskDelay(800 / portTICK_PERIOD_MS);
-    brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_1);
-    ++shots;
-    if(shots == 3) {
-        shots = 0;
-        brushed_motor_backward(MCPWM_UNIT_0, MCPWM_TIMER_1, 100);
-        vTaskDelay(800 / portTICK_PERIOD_MS);
-        brushed_motor_stop(MCPWM_UNIT_0, MCPWM_TIMER_1);
-    }
     vTaskDelete(NULL);
 }
 
