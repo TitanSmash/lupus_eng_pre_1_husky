@@ -95,7 +95,7 @@ static void configure_motors() {
 }
 
 
-/**********
+/****
  *  BT commands
  * 
  *  Task related stuff (TODO)
@@ -116,7 +116,7 @@ static void configure_motors() {
  *  
  *  [mot_1_f]1000
  * 
- **********/
+ ****/
 
 // motor control commands
 void motor1_f (void * parameter){
@@ -235,37 +235,23 @@ void sendTasks(void * parameter) {
 }
 
 void button_detector(void * parameter) {
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(10 / portTICK_PERIOD_MS);
     while(true) {
         //forward button
-        if(digitalRead(2) == 1 && !pressed) {
-            count_runs = 0;
-            pressed = true;
-            if(count_item < tasks.size() - 1) {
-                ++count_item;
-            } else if(count_item < tasks.size() && tasks.size() >= 1) {
-                count_item = 0;
-            }
-        }
-        //delete button
-        if(digitalRead(4) == 1 && !pressed) {
-            pressed = true;
-            //stand up and shot
-            count_runs = 0;
-
-            xTaskCreate(&deleteTask, "send tasks to app", 1000, NULL, 1, NULL);
-        }
+        
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
     //vTaskDelete(NULL);
 }
 
 void counter_timer(void * parameter) {
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    
     while(true) {
         //displayItem
         if((last_item != count_item) && (tasks.size() > count_item) ) {
             last_item = count_item; 
             hello2 = tasks.at(count_item);
+            display_loop(hello2);
         }
 
         //reset "pressed status" (buttons can be pressed again
@@ -282,7 +268,7 @@ void counter_timer(void * parameter) {
             count_runs = 0;
         }
         ++count_runs;
-        delay(15);
+        vTaskDelay(50 / portTICK_PERIOD_MS);
     }
     //vTaskDelete(NULL);
 }
@@ -336,8 +322,8 @@ void setup()
 
     //----------------------------
     //buttons initialization
-    pinMode(2, INPUT);
-    pinMode(4, INPUT);
+    pinMode(12, INPUT);
+    pinMode(0, INPUT);
     //----------------------
 
     if(!SerialBT.begin("board 54")){
@@ -398,7 +384,30 @@ void loop()
         }
     } 
 
-    
+    if(digitalRead(12) == 1 && !pressed) {
+            count_runs = 0;
+            pressed = true;
+            Serial.println("pressed");
+            if(count_item < tasks.size() - 1) {
+                ++count_item;
+            } else if(count_item < tasks.size() && tasks.size() >= 1) {
+                count_item = 0;
+            }
+        }
+        //delete button
+        if(digitalRead(0) == 1 && !pressed) {
+            pressed = true;
+            //stand up and shot
+            count_runs = 0;
+            Serial.println("pressed 2");
+            xTaskCreate(&deleteTask, "send tasks to app", 1000, NULL, 1, NULL);
+        }
+
+
+
+
+
+
     //-----------------------------------------------------------------------------
     //redefine pins for buttons?
     //scroll button
@@ -456,7 +465,7 @@ void loop()
     *   To read and call a new function, add a else if as below
     * 
     * 
-    *   ___________________________
+    *   _________
     *   
     *   else if(action == "[cmd]" && data_done) {
     *       message = "\0";
@@ -464,7 +473,7 @@ void loop()
     *       xTaskCreate(&command_func, "command desc", 10000, NULL, 1, NULL);
     *       data_done = false;
     *   }
-    *   ____________________________  
+    *   __________  
     * 
     *   In the function, you can read the variable content for the data string. Modifying 
     *   Datatypes has to be done within the function itself.
